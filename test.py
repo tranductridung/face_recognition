@@ -23,8 +23,7 @@ for filename in os.listdir(known_faces_dir):
         encoding = face_recognition.face_encodings(image)
         if encoding:
             known_face_encodings.append(encoding[0])
-            name = filename.split('.')[0].split('_')[0]  # Lấy phần tên từ tên file, loại bỏ phần số
-            known_face_names.append(name) 
+            known_face_names.append(filename.split('.')[0])  # Lấy tên từ tên tệp
 
 # Đọc thông tin từ file attendance.csv
 def read_attendance_file():
@@ -49,15 +48,16 @@ def save_attendance(name, status):
     with open('attendance.csv', mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([name, today_date, status])
-        print(f"{name},{status},{today_date}")
+        print(f"{name} đã {status} vào {today_date}")
 
+# Initialize some variables
 face_locations = []
 face_encodings = []
 face_names = []
 frame_count = 0  # Biến đếm số khung hình
 
 while True:
-    # Lấy frame từ video
+    # Grab a single frame of video
     ret, frame = video_capture.read()
 
     # Tăng biến đếm số khung hình
@@ -67,20 +67,19 @@ while True:
     if frame_count % 5 != 0:
         continue
 
-    # Giảm kích thước khung hình
+    # Resize frame of video to 1/4 size for faster face recognition processing
     small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
 
-    # Chuyển đổi BGR (của opencv) sang RGB (của face_recognition)
+    # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
     rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
     
-    # Tìm khuôn mặt và trả về tọa độ khuôn mặt
-    face_locations = face_recognition.face_locations(rgb_small_frame, model="hog")  # Sử dụng model "hog"
-    # Encoding khuôn mặt thành vector
+    # Find all the faces and face encodings in the current frame of video
+    face_locations = face_recognition.face_locations(rgb_small_frame, model="hog")  # Sử dụng model "hog" để nhanh hơn
     face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
 
     face_names = []
     for face_encoding in face_encodings:
-        # So khớp với các khuôn mặt đã đăng ký
+        # So khớp với khuôn mặt đã đăng ký
         matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
         name = "Unknown"
 
